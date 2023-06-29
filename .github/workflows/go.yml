@@ -1,0 +1,88 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Go
+
+on:
+  push:
+    branches: [ "main" ]
+  release:
+    types: [prereleased]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, windows-latest, macos-latest]
+        arch: [amd64]
+    runs-on: ${{ matrix.platform }}
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.20
+        
+    - name: Get the version
+      id: get_version
+      shell: bash
+      run: echo ::set-output name=VERSION::$(echo $GITHUB_REF | cut -d / -f 3)
+      
+    - name: Build Windows
+    - if: matrix.platform == 'windows-latest'
+      run: go build -o lecture-taker.exe -v ./...
+
+    - name: Build Unix-Like
+    - if: matrix.platform != 'windows-latest'
+      run: go build -o lecture-taker -v ./...
+      
+    - name: macOS - Uploading Artifact
+      if: matrix.platform == 'macos-latest'
+      uses: actions/upload-artifact@master
+      with:
+        name: lecture-taker-${{ github.sha }}.macOS-${{ matrix.arch }}
+        path: lecture-taker
+    - name: macOS - Upload binaries to release
+      uses: svenstaro/upload-release-action@v1-release
+      if: github.event_name == 'release' && matrix.platform == 'macos-latest'
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: lecture-taker
+        asset_name: lecture-taker-${{ steps.get_version.outputs.VERSION }}.macos-${{ matrix.arch }}
+        tag: ${{ github.ref }}
+        overwrite: true
+    - name: Linux - Uploading Artifact
+      if: matrix.platform == 'ubuntu-latest'
+      uses: actions/upload-artifact@master
+      with:
+        name: lecture-taker-${{ github.sha }}.ubuntu-${{ matrix.arch }}
+        path: lecture-taker
+    - name: Linux - Upload binaries to release
+      uses: svenstaro/upload-release-action@v1-release
+      if: github.event_name == 'release' && matrix.platform == 'ubuntu-latest'
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: lecture-taker
+        asset_name: lecture-taker-${{ steps.get_version.outputs.VERSION }}.ubuntu-${{ matrix.arch }}
+        tag: ${{ github.ref }}
+        overwrite: true
+        
+    - name: Windows - Uploading Artifact
+      if: matrix.platform == 'windows-latest'
+      uses: actions/upload-artifact@master
+      with:
+        name: lecture-taker-${{ github.sha }}.windows-${{ matrix.arch }}.exe
+        path: lecture-taker.exe
+    - name: Windows - Upload binaries to release
+      uses: svenstaro/upload-release-action@v1-release
+      if: github.event_name == 'release' && matrix.platform == 'windows-latest'
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: lecture-taker.exe
+        asset_name: lecture-taker-${{ steps.get_version.outputs.VERSION }}.windows-${{ matrix.arch }}.exe
+        tag: ${{ github.ref }}
+        overwrite: true
+      
+
+    
