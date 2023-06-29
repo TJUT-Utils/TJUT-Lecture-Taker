@@ -28,11 +28,11 @@ jobs:
       run: echo ::set-output name=VERSION::$(echo $GITHUB_REF | cut -d / -f 3)
       
     - name: Build Windows
-    - if: matrix.platform == 'windows-latest'
+      if: matrix.platform == 'windows-latest'
       run: go build -o lecture-taker.exe -v ./...
 
     - name: Build Unix-Like
-    - if: matrix.platform != 'windows-latest'
+      if: matrix.platform != 'windows-latest'
       run: go build -o lecture-taker -v ./...
       
     - name: macOS - Uploading Artifact
