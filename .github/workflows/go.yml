@@ -17,7 +17,8 @@ jobs:
         arch: [amd64]
     runs-on: ${{ matrix.platform }}
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout source file
+      uses: actions/checkout@v3
 
     - name: Set up Go
       uses: actions/setup-go@v3
